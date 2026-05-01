@@ -1,7 +1,7 @@
 # cPanelSniper
 
 <p align="center">
-  <img src="cPanel.jpg" alt="cPanelSniper" width="700"/>
+  <img src="cPanelSniper.jpg" alt="cPanelSniper" width="700"/>
 </p>
 
 <p align="center">
