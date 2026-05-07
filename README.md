@@ -182,6 +182,27 @@ echo "https://target.com:2087" | python3 cPanelSniper.py
   python3 cPanelSniper.py -t 20 --action list
 ```
 
+### Proxy Support
+
+cPanelSniper supports **SOCKS5**, **SOCKS4**, and **HTTP** proxies. 
+
+> [!IMPORTANT]
+> Для работы прокси необходимо установить библиотеку **PySocks**:
+> `pip install PySocks`
+
+```bash
+# Использование SOCKS5 прокси (с авторизацией)
+python3 cPanelSniper.py -u https://target.com:2087 --proxy "165.49.117.254:56305:user:pass SOCKS"
+
+# Использование SOCKS5 прокси (без авторизации)
+python3 cPanelSniper.py -u https://target.com:2087 --proxy "1.2.3.4:1080 SOCKS"
+
+# Использование HTTP прокси
+python3 cPanelSniper.py -u https://target.com:2087 --proxy "1.2.3.4:8080 HTTP"
+```
+
+---
+
 ---
 
 ## Interactive WHM Shell
